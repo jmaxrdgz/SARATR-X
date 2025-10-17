@@ -3,10 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from mmpretrain.mmpretrain.registry import MODELS
 
-
-@MODELS.register_module()
 class MGF(nn.Module):
     """Multi-scale Gradient Features for SAR images.
     
