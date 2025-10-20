@@ -103,7 +103,7 @@ class HiViTMaskedAutoencoder(MaskedAutoencoder, HiViT):
             for _ in range(decoder_depth)])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
-        self.decoder_pred = nn.Linear(decoder_embed_dim, self.decoder_patch_size**2 * in_chans * out_chans, bias=True) # decoder to patch
+        self.decoder_pred = nn.Linear(decoder_embed_dim, self.decoder_patch_size**2 * out_chans, bias=True) # decoder to patch
         # --------------------------------------------------------------------------
 
         # initialize (and freeze) pos_embed by sin-cos embedding
