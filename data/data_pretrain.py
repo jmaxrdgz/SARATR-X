@@ -2,7 +2,6 @@ from pathlib import Path
 import numpy as np
 
 import torch
-from torch.utils import data
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
