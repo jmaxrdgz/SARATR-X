@@ -1,0 +1,8 @@
+# config.yaml
+
+model:
+  name: SARATRX
+  input_channels: 1
+
+data:
+  chip_size: 224
