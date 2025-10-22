@@ -1,4 +1,4 @@
-Pytorch Lightning implementation of (SARATR-X: Toward Building A Foundation Model for SAR Target Recognition)[https://arxiv.org/abs/2405.09365] pretraining for the (Capella Space OpenData)[https://www.capellaspace.com/earth-observation/gallery] dataset.
+Pytorch Lightning implementation of [SARATR-X: Toward Building A Foundation Model for SAR Target Recognition](https://arxiv.org/abs/2405.09365) pretraining pipeline for the [Capella Space OpenData](https://www.capellaspace.com/earth-observation/gallery) dataset.
 
 # Install & Setup
 ## On Linux/MacOS
