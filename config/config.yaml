@@ -2,12 +2,14 @@
 
 # TODO: Make config loggable with lightning
 
+# TODO: make training work for every input size
+
 model:
-  name: SARATRX
+  name: SARATRX                     # SARATR-X Training hyperparameters
   in_chans: 3
   mgf_kens: [9, 13, 17]
   resume: null
-  norm_pix_loss: false              # Norm pix loss does not work with SAR
+  norm_pix_loss: false              # false
 
 data:
   train_data: "capella/chips_512"
@@ -15,7 +17,7 @@ data:
   dataset_std_dev: 1.57
   num_workers: 4
 
-train:                              # SARATR-X Training hyperparameters
+train:
   seed: 42
   n_gpu: "auto"
   epochs: 200                       # 200

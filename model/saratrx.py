@@ -1,20 +1,14 @@
-import platform
-
 import torch
 from torch import nn
-import torch.multiprocessing as mp
 from torch.optim.lr_scheduler import LambdaLR
-from functools import partial
 import lightning as L
-from lightning.pytorch.callbacks import ModelSummary
+from functools import partial
 
 from config import config
-from model.hivit_mae import HiViTMaskedAutoencoder
-from model.mgf import MGF
-from data.data_pretrain import build_loader
+from .hivit_mae import HiViTMaskedAutoencoder
+from .mgf import MGF
 
 
-# --- Model & Training Loop ---
 class SARATRX(L.LightningModule):
     def __init__(self, img_size=512, mask_ratio=0.75, mgf_kens = [9, 13, 17], **kwargs):
         super().__init__()
@@ -23,9 +17,9 @@ class SARATRX(L.LightningModule):
         self.save_hyperparameters()
 
         self.model = HiViTMaskedAutoencoder(
-            img_size=img_size, embed_dim=512, depths=[2, 2, 20], num_heads=8, stem_mlp_ratio=3.,
-            mlp_ratio=4., decoder_embed_dim=512, decoder_depth=6, decoder_num_heads=16, hifeat=True,
-            rpe=False, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+            img_size=img_size, embed_dim=512, depths=[2, 2, 20], num_heads=8, 
+            stem_mlp_ratio=3., mlp_ratio=4., decoder_embed_dim=512, decoder_depth=6, decoder_num_heads=16, 
+            hifeat=True, rpe=False, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
         # TODO: Convert to single dim input without breaking pretrained weights loading (average first conv weights)
         # Load pretrained weights
@@ -99,31 +93,3 @@ class SARATRX(L.LightningModule):
         }
 
         return [optimizer], [scheduler]
-
-
-if __name__ == "__main__":
-    if platform.system() == "Darwin":
-        mp.set_start_method("spawn", force=True) # Avoid errors on MacOS
-
-    L.seed_everything(config.train.seed, workers=True)
-    
-    train_loader = build_loader()
-
-    # --- Training Run ---
-    if config.model.resume is not None: # Load from a lightning checkpoint
-        autoencoder = SARATRX.load_from_checkpoint(config.model.resume, map_location="cpu")
-    else:
-        autoencoder = SARATRX(img_size=config.data.img_size, in_chans=config.model.in_chans)
-
-    trainer = L.Trainer(
-        callbacks=ModelSummary(max_depth=0),
-        gradient_clip_val=config.train.clip_grad,
-        precision="16-mixed",
-        devices=config.train.n_gpu,
-        accelerator="auto",
-        max_epochs=config.train.epochs,
-        log_every_n_steps=50,
-        deterministic=True,
-        enable_progress_bar=True,
-    )
-    trainer.fit(autoencoder, train_loader)

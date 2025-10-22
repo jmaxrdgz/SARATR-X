@@ -31,7 +31,7 @@ python data/chip_capella.py /path/to/sar_images --chip_size 512
 
 # Launch Training
 ```
-python train.py
+python pretrain.py
 ```
 You can check training metrics on TensorBoard visualizer with this command:  
 ```
