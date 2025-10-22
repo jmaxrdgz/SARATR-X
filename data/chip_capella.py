@@ -38,11 +38,11 @@ def chip_sar_images(input_dir: str, chip_size: int = 512):
                 chip = chip.astype(np.float16)
 
                 # Chip name
-                chip_name = f"{base_name}_{x}_{y}.tif"
+                chip_name = f"{base_name}_{x}_{y}"
                 chip_path = os.path.join(output_dir, chip_name)
 
                 # Save
-                np.save(chip_path)
+                np.save(chip_path, chip)
 
     print(f"Save chips at : {output_dir}")
 

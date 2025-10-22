@@ -41,6 +41,7 @@ runs/
 wandb/
 tensorboard/
 MNIST/
+capella/
 
 # -----------------------------
 # OS / Editor files
