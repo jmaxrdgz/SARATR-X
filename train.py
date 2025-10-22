@@ -1,11 +1,12 @@
+import platform
+
 import torch
 from torch import nn
+import torch.multiprocessing as mp
+from torch.optim.lr_scheduler import LambdaLR
 from functools import partial
 import lightning as L
 from lightning.pytorch.callbacks import ModelSummary
-
-# temp (for test)
-import torch.multiprocessing as mp
 
 from config import config
 from model.hivit_mae import HiViTMaskedAutoencoder
@@ -15,8 +16,7 @@ from data.data_pretrain import build_loader
 
 # --- Model & Training Loop ---
 class SARATRX(L.LightningModule):
-    def __init__(self, img_size=512, patch_size=16, in_chans=3, out_chans=3,
-                 mask_ratio=0.75, mgf_kens = [9, 13, 17], **kwargs):
+    def __init__(self, img_size=512, mask_ratio=0.75, mgf_kens = [9, 13, 17], **kwargs):
         super().__init__()
         self.example_input_array = torch.Tensor(
             config.train.batch_size, config.model.in_chans, config.data.img_size, config.data.img_size)
@@ -30,7 +30,8 @@ class SARATRX(L.LightningModule):
         # TODO: Convert to single dim input without breaking pretrained weights loading (average first conv weights)
         # Load pretrained weights
         if config.model.resume is None:
-            state_dict = torch.load("checkpoints/mae_hivit_base_1600ep.pth", map_location="cpu", weights_only=True)
+            state_dict = torch.load(
+                "checkpoints/mae_hivit_base_1600ep.pth", map_location="cpu", weights_only=True)
             self.model.load_state_dict(state_dict, strict=False)
             print(">>> Load pretrained ImageNet weights")
         
@@ -75,12 +76,34 @@ class SARATRX(L.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=float(config.train.lr))
-        return optimizer
+        optimizer = torch.optim.Adam(
+            self.parameters(), 
+            lr=float(config.train.lr),
+            weight_decay=config.train.weight_decay,
+            betas=(config.train.optimizer_momentum.beta1, config.train.optimizer_momentum.beta2),
+        )
+
+        # Cosine LR wcheduler with warmup
+        def lr_lambda(current_epoch):
+            if current_epoch < config.train.warmup_epochs:
+                return float(current_epoch) / float(max(1, config.train.warmup_epochs))
+            progress = (current_epoch - config.train.warmup_epochs) / float(
+                max(1, config.train.epochs - config.train.warmup_epochs)
+            )
+            return 0.5 * (1.0 + torch.cos(torch.pi * progress))
+
+        scheduler = {
+            "scheduler": LambdaLR(optimizer, lr_lambda=lr_lambda),
+            "interval": "epoch",   # or "step"
+            "frequency": 1,
+        }
+
+        return [optimizer], [scheduler]
 
 
 if __name__ == "__main__":
-    # mp.set_start_method("spawn", force=True) # Avoid errors on MacOS
+    if platform.system() == "Darwin":
+        mp.set_start_method("spawn", force=True) # Avoid errors on MacOS
 
     L.seed_everything(config.train.seed, workers=True)
     
@@ -95,9 +118,9 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         callbacks=ModelSummary(max_depth=0),
         gradient_clip_val=config.train.clip_grad,
-        precision="16-mixed", # AMP
+        precision="16-mixed",
         devices=config.train.n_gpu,
-        accelerator="gpu",
+        accelerator="auto",
         max_epochs=config.train.epochs,
         log_every_n_steps=50,
         deterministic=True,
