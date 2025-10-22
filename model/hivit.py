@@ -4,7 +4,7 @@ import torch.nn as nn
 from functools import partial
 import torch.utils.checkpoint as checkpoint
 from timm.models.vision_transformer import DropPath, Mlp, trunc_normal_
-from timm.models.layers import to_2tuple
+from timm.layers import to_2tuple
 
 
 class Attention(nn.Module):

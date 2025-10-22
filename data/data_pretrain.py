@@ -21,18 +21,19 @@ class NormalizeSAR:
 
 def build_loader():
     transform = transforms.Compose([
+        transforms.RandomResizedCrop(config.data.img_size, scale=(0.2, 1.0), interpolation=3),
         transforms.Resize((config.data.img_size, config.data.img_size)),
 
-        transforms.RandomAffine(degrees=(-10,10), shear=(0, 0, -10, 10)),
+        # transforms.RandomAffine(degrees=(-10,10), shear=(0, 0, -10, 10)),
         transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(contrast=0.5),
 
-        transforms.ToTensor(),
-        NormalizeSAR(std_dev=config.data.dataset_std_dev),
+        # NormalizeSAR(std_dev=config.data.dataset_std_dev),
     ])
 
     train_set = NpyDataset(folder=config.data.train_data, transform=transform)
-    train_loader = DataLoader(train_set, batch_size=config.train.batch_size, shuffle=True, num_workers=1)
+    train_loader = DataLoader(train_set, batch_size=config.train.batch_size, shuffle=True, 
+        persistent_workers=True, pin_memory=True, num_workers=config.data.num_workers, drop_last=True)
 
     return train_loader
 

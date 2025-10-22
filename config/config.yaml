@@ -5,12 +5,25 @@ model:
   in_chans: 3
   mgf_kens: [9, 13, 17]
   resume: null
+  norm_pix_loss: false              # Norm pix loss does not work with SAR
 
 data:
-  train_data: "path/to/train/data"
+  train_data: "/projets/ViTSAR/Capella_10-01/chips_448__float16"
   img_size: 224
   dataset_std_dev: 1.57
+  num_workers: 4
 
 train:
   seed: 42
-  batch_size: 32
+  n_gpu: 2
+  epochs: 1                         # 200
+  batch_size: 64                    # 800
+  lr: 1.5e-4                        # 1.5e-4
+  clip_grad: 5.0
+
+
+# TODO: Add
+#   weight decay 0.05
+# 	optimizer momentum β1, β2 = 0.9, 0.95
+# 	learning rate schedule cosine decay
+# 	warmup epoch 5
