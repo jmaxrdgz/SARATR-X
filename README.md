@@ -37,4 +37,4 @@ You can check training metrics on TensorBoard visualizer with this command:
 ```
 tensorboard --logdir=lightning_logs/
 ```
-Here is a [notebook example](https://colab.research.google.com/drive/1naxjfy85keY7Ch6VlU6mL0mX8YPK-z1b?usp=sharing) to run pretraining on colab's T4 GPU. Dataset is not included & supposed to be already chipped.
+Here is a [notebook example](https://colab.research.google.com/drive/1naxjfy85keY7Ch6VlU6mL0mX8YPK-z1b?usp=sharing) to run pretraining on colab's T4 GPU.
