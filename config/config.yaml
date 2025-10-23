@@ -17,6 +17,7 @@ data:
   num_workers: 2
 
 train:
+  init_weights: "checkpoints/mae_hivit_base_1600ep.pth"
   seed: 42
   n_gpu: "auto"
   epochs: 200                       # 200

@@ -31,7 +31,7 @@ class SARATRX(L.LightningModule):
         # Load pretrained weights
         if config.model.resume is None:
             state_dict = torch.load(
-                "checkpoints/mae_hivit_base_1600ep.pth", map_location="cpu", weights_only=True)
+                config.train.init_weights, map_location="cpu", weights_only=True)
             self.model.load_state_dict(state_dict, strict=False)
             print(">>> Load pretrained ImageNet weights")
         
