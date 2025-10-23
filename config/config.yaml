@@ -1,7 +1,6 @@
 # config.yaml
 
 # TODO: Make config loggable with lightning
-
 # TODO: make training work for every input size
 
 model:
@@ -15,7 +14,7 @@ data:
   train_data: "capella/chips_512"
   img_size: 224
   dataset_std_dev: 1.57
-  num_workers: 4
+  num_workers: 2
 
 train:
   seed: 42
