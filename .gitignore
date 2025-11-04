@@ -42,6 +42,7 @@ wandb/
 tensorboard/
 MNIST/
 capella/
+data/sentinel12-image-pairs-segregated-by-terrain/
 
 # -----------------------------
 # OS / Editor files
