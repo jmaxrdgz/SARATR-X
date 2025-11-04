@@ -1,13 +1,12 @@
-from pathlib import Path
-import numpy as np
-
-import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from config import config
+import config
+
+from ..data import CapellaDataset, SentinelDataset
 
 
+# TODO: check normalization values for sentinel-1 and sentinel-2
 class NormalizeSAR:
     """SAR Normalization used in TRANSAR paper."""
     def __init__(self, std_dev):
@@ -19,7 +18,8 @@ class NormalizeSAR:
         return img
     
 
-def build_loader():
+def build_loader(dataset_name=None, **kwargs):
+    """Builds and returns the training data loader."""
     transform = transforms.Compose([
         transforms.RandomResizedCrop(config.data.img_size, scale=(0.2, 1.0), interpolation=3),
         transforms.Resize((config.data.img_size, config.data.img_size)),
@@ -31,34 +31,16 @@ def build_loader():
         # NormalizeSAR(std_dev=config.data.dataset_std_dev),
     ])
 
-    train_set = NpyDataset(folder=config.data.train_data, transform=transform)
-    train_loader = DataLoader(train_set, batch_size=config.train.batch_size, shuffle=True, 
+    if dataset_name is None:
+        raise ValueError("Dataset name must be provided")
+    elif dataset_name == "capella":
+        train_dataset = CapellaDataset(folder=config.data.train_data, transform=transform)
+    elif dataset_name == "sentinel":
+        train_dataset = SentinelDataset(data_path=config.data.train_data, transform=transform, **kwargs)
+    else:
+        raise ValueError(f"Dataset: {dataset_name} not implemented yet.")
+
+    train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True, 
         persistent_workers=True, pin_memory=True, num_workers=config.data.num_workers, drop_last=True)
 
     return train_loader
-
-
-class NpyDataset(Dataset):
-    def __init__(self, folder, transform=None):
-        self.folder = folder
-        self.files = sorted(Path(folder).glob("*.npy"))
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.files)
-
-    def __getitem__(self, idx):
-        arr = np.load(self.files[idx])
-        if arr.ndim == 2:
-            arr = arr[np.newaxis, :, :]
-
-        img = torch.from_numpy(arr).float()
-
-        if self.transform:
-            img = self.transform(img)
-
-        assert img.shape[0] in [1, 3], "Image must have 1 or 3 channels"
-        if img.shape[0] == 1:
-            img = img.repeat(3, 1, 1)
-
-        return img, 0

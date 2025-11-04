@@ -10,7 +10,7 @@ from lightning.pytorch.callbacks import ModelSummary
 from functools import partial
 
 from config import config
-from data.data_pretrain import build_loader
+from data.dataset_capella import build_loader
 from model.hivit_mae import HiViTMaskedAutoencoder
 from model.mgf import MGF
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     L.seed_everything(config.train.seed, workers=True)
     
-    train_loader = build_loader()
+    train_loader = build_loader(dataset_name=config.data.dataset_name) # NOTE: when using sentinel, can pass terrains argument here
 
     # --- Training Run ---
     if config.model.resume is not None: # Load from a lightning checkpoint
