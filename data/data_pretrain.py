@@ -2,22 +2,10 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import config
+from config import config
 
 from .dataset_capella import CapellaDataset
 from .dataset_sentinel import SentinelDataset
-
-
-# TODO: check normalization values for sentinel-1 and sentinel-2
-class NormalizeSAR:
-    """SAR Normalization used in TRANSAR paper."""
-    def __init__(self, std_dev):
-        self.std_dev = std_dev
-
-    def __call__(self, img):
-        img = img - img.mean()
-        img = img / self.std_dev
-        return img
 
 
 class PairedTransform:
@@ -42,6 +30,7 @@ class PairedTransform:
         return img1_t, img2_t
     
 
+# TODO : Use TRANSAR transform for SAR and Opt transform for optical
 def build_loader(dataset_name=None, **kwargs):
     """Builds and returns the training data loader."""
     base_transform = transforms.Compose([
@@ -52,13 +41,12 @@ def build_loader(dataset_name=None, **kwargs):
         transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(contrast=0.5),
 
-        # NormalizeSAR(std_dev=config.data.dataset_std_dev),
+        # No normalization in SARATRX paper
     ])
 
     if dataset_name is None:
         raise ValueError("Dataset name must be provided")
     elif dataset_name == "capella":
-        # Capella: single SAR images, use base transform
         train_dataset = CapellaDataset(folder=config.data.train_data, transform=base_transform)
     elif dataset_name == "sentinel":
         # Sentinel: paired SAR-optical images, use paired transform
