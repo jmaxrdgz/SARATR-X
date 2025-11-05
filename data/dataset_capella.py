@@ -28,4 +28,7 @@ class CapellaDataset(Dataset):
         if img.shape[0] == 1:
             img = img.repeat(3, 1, 1)
 
-        return img, 0
+        # Return a dummy tensor placeholder instead of scalar 0
+        # This maintains shape compatibility even though it won't be used in MGF mode
+        dummy_target = torch.zeros_like(img)
+        return img, dummy_target
