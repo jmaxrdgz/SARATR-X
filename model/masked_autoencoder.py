@@ -19,30 +19,32 @@ class MaskedAutoencoder(nn.Module):
     
     def patchify(self, imgs):
         """
-        imgs: (N, 3, H, W)
-        x: (N, L, patch_size**2 *3)
+        imgs: (N, C, H, W)
+        x: (N, L, patch_size**2 * C)
         """
         p = self.decoder_patch_size
         assert imgs.shape[2] == imgs.shape[3] and imgs.shape[2] % p == 0
 
+        C = imgs.shape[1]  # Get number of channels dynamically
         h = w = imgs.shape[2] // p
-        x = imgs.reshape(shape=(imgs.shape[0], 1, h, p, w, p))
+        x = imgs.reshape(shape=(imgs.shape[0], C, h, p, w, p))
         x = torch.einsum('nchpwq->nhwpqc', x)
-        x = x.reshape(shape=(imgs.shape[0], h * w, p**2 * 1))
+        x = x.reshape(shape=(imgs.shape[0], h * w, p**2 * C))
         return x
 
     def unpatchify(self, x):
         """
-        x: (N, L, patch_size**2 *3)
-        imgs: (N, 3, H, W)
+        x: (N, L, patch_size**2 * C)
+        imgs: (N, C, H, W)
         """
         p = self.decoder_patch_size
         h = w = int(x.shape[1]**.5)
         assert h * w == x.shape[1]
-        
-        x = x.reshape(shape=(x.shape[0], h, w, p, p, 1))
+
+        C = x.shape[2] // (p ** 2)  # Infer number of channels
+        x = x.reshape(shape=(x.shape[0], h, w, p, p, C))
         x = torch.einsum('nhwpqc->nchpwq', x)
-        imgs = x.reshape(shape=(x.shape[0], 1, h * p, h * p))
+        imgs = x.reshape(shape=(x.shape[0], C, h * p, h * p))
         return imgs
     
     def masking_id(self, batch_size, mask_ratio):

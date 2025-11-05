@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -17,11 +18,33 @@ class NormalizeSAR:
         img = img - img.mean()
         img = img / self.std_dev
         return img
+
+
+class PairedTransform:
+    """Apply identical transforms to paired images (SAR and optical).
+
+    This ensures that both images in a pair receive the same random transformations
+    (e.g., same crop location, same flip direction) to maintain spatial correspondence.
+    """
+    def __init__(self, base_transform):
+        self.base_transform = base_transform
+
+    def __call__(self, img1, img2):
+        # Get random seed for reproducible transforms
+        seed = torch.randint(0, 2**32, (1,)).item()
+
+        # Apply same transform to both images using the same random seed
+        torch.manual_seed(seed)
+        img1_t = self.base_transform(img1)
+        torch.manual_seed(seed)
+        img2_t = self.base_transform(img2)
+
+        return img1_t, img2_t
     
 
 def build_loader(dataset_name=None, **kwargs):
     """Builds and returns the training data loader."""
-    transform = transforms.Compose([
+    base_transform = transforms.Compose([
         transforms.RandomResizedCrop(config.data.img_size, scale=(0.2, 1.0), interpolation=3),
         transforms.Resize((config.data.img_size, config.data.img_size)),
 
@@ -35,9 +58,12 @@ def build_loader(dataset_name=None, **kwargs):
     if dataset_name is None:
         raise ValueError("Dataset name must be provided")
     elif dataset_name == "capella":
-        train_dataset = CapellaDataset(folder=config.data.train_data, transform=transform)
+        # Capella: single SAR images, use base transform
+        train_dataset = CapellaDataset(folder=config.data.train_data, transform=base_transform)
     elif dataset_name == "sentinel":
-        train_dataset = SentinelDataset(data_path=config.data.train_data, transform=transform, **kwargs)
+        # Sentinel: paired SAR-optical images, use paired transform
+        paired_transform = PairedTransform(base_transform)
+        train_dataset = SentinelDataset(data_path=config.data.train_data, transform=paired_transform, **kwargs)
     else:
         raise ValueError(f"Dataset: {dataset_name} not implemented yet.")
 

@@ -7,11 +7,12 @@ model:
   name: SARATRX                     # SARATR-X Training hyperparameters
   in_chans: 3
   mgf_kens: [9, 13, 17]
+  target_mode: "optical"            # "mgf" for MGF on SAR, "optical" for optical image target
   resume: null
-  norm_pix_loss: false              # false
+  norm_pix_loss: false              # false in SARATRX paper
 
 data:
-  dataset_name: "sentinel"
+  dataset_name: "sentinel"          # only "sentinel" can be used if target_mode is "optical"
   train_data: "dataset/sentinel12/v_2"
   img_size: 256                     # 256 for sentinel-1&2
   dataset_std_dev: 1.57
