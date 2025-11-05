@@ -35,7 +35,7 @@ def build_loader(dataset_name=None, **kwargs):
     """Builds and returns the training data loader."""
     base_transform = transforms.Compose([
         transforms.RandomResizedCrop(config.data.img_size, scale=(0.2, 1.0), interpolation=3),
-        transforms.Resize((config.data.img_size, config.data.img_size)),
+        transforms.Resize((config.data.img_size, config.data.img_size)), # Ensure input size
 
         # transforms.RandomAffine(degrees=(-10,10), shear=(0, 0, -10, 10)),
         transforms.RandomHorizontalFlip(),

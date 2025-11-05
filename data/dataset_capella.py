@@ -24,10 +24,6 @@ class CapellaDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        assert img.shape[0] in [1, 3], "Image must have 1 or 3 channels"
-        if img.shape[0] == 1:
-            img = img.repeat(3, 1, 1)
-
         # Return a dummy tensor placeholder instead of scalar 0
         # This maintains shape compatibility even though it won't be used in MGF mode
         dummy_target = torch.zeros_like(img)

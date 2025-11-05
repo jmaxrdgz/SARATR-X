@@ -5,17 +5,16 @@
 
 model:
   name: SARATRX                     # SARATR-X Training hyperparameters
-  in_chans: 3
+  in_chans: 1                       # 1 for SAR (grayscale), 3 for RGB
   mgf_kens: [9, 13, 17]
-  target_mode: "optical"            # "mgf" for MGF on SAR, "optical" for optical image target
+  target_mode: "mgf"            # "mgf" or "optical" ("optical" can only be used with sentinel dataset)
   resume: null
   norm_pix_loss: false              # false in SARATRX paper
 
 data:
-  dataset_name: "sentinel"          # only "sentinel" can be used if target_mode is "optical"
+  dataset_name: "sentinel"          # "capella" or "sentinel"
   train_data: "dataset/sentinel12/v_2"
-  img_size: 256                     # 256 for sentinel-1&2
-  dataset_std_dev: 1.57
+  img_size: 224                     # 256 for sentinel-1&2
   num_workers: 2
 
 train:
@@ -24,7 +23,7 @@ train:
   n_gpu: "auto"
   epochs: 200                       # 200
   warmup_epochs: 5                  # 5
-  batch_size: 64                    # 800
+  batch_size: 8                     # 64 (original), reduced for MPS memory constraints
   lr: 1.5e-4                        # 1.5e-4
   weight_decay: 0.05                # 0.05
   optimizer_momentum:

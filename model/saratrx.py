@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 from torch.optim.lr_scheduler import LambdaLR
@@ -21,11 +22,19 @@ class SARATRX(L.LightningModule):
             stem_mlp_ratio=3., mlp_ratio=4., decoder_embed_dim=512, decoder_depth=6, decoder_num_heads=16,
             hifeat=True, rpe=False, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-        # TODO: Convert to single dim input without breaking pretrained weights loading (average first conv weights)
         # Load pretrained weights
         if config.model.resume is None:
             state_dict = torch.load(
-                "checkpoints/mae_hivit_base_1600ep.pth", map_location="cpu", weights_only=True)
+                config.train.init_weights, map_location="cpu", weights_only=True)
+
+            # Adapt first conv layer from 3 channels to in_chans by averaging
+            if kwargs.get('in_chans', 3) != 3 and 'patch_embed.proj.weight' in state_dict:
+                conv_weight = state_dict['patch_embed.proj.weight']  # shape: [out_channels, 3, kernel_h, kernel_w]
+                # Average across the 3 input channels and repeat to match in_chans
+                avg_weight = conv_weight.mean(dim=1, keepdim=True)  # shape: [out_channels, 1, kernel_h, kernel_w]
+                state_dict['patch_embed.proj.weight'] = avg_weight.repeat(1, kwargs.get('in_chans', 3), 1, 1)
+                print(f">>> Adapted first conv layer from 3 to {kwargs.get('in_chans', 3)} channels")
+
             self.model.load_state_dict(state_dict, strict=False)
             print(">>> Load pretrained ImageNet weights")
 
@@ -71,11 +80,6 @@ class SARATRX(L.LightningModule):
                     f"target_imgs must be a Tensor in optical mode, "
                     f"got {type(target_imgs)}"
                 )
-            if target_imgs.shape != imgs.shape:
-                raise ValueError(
-                    f"Target shape {target_imgs.shape} must match "
-                    f"input shape {imgs.shape}"
-                )
             # Use optical image directly as target (for Sentinel dataset)
             target = self.model.patchify(target_imgs)
         else:
@@ -115,7 +119,7 @@ class SARATRX(L.LightningModule):
             progress = (current_epoch - config.train.warmup_epochs) / float(
                 max(1, config.train.epochs - config.train.warmup_epochs)
             )
-            return 0.5 * (1.0 + torch.cos(torch.pi * progress))
+            return 0.5 * (1.0 + math.cos(math.pi * progress))
 
         scheduler = {
             "scheduler": LambdaLR(optimizer, lr_lambda=lr_lambda),
