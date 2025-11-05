@@ -3,7 +3,8 @@ from torchvision import transforms
 
 import config
 
-from ..data import CapellaDataset, SentinelDataset
+from .dataset_capella import CapellaDataset
+from .dataset_sentinel import SentinelDataset
 
 
 # TODO: check normalization values for sentinel-1 and sentinel-2
@@ -40,7 +41,7 @@ def build_loader(dataset_name=None, **kwargs):
     else:
         raise ValueError(f"Dataset: {dataset_name} not implemented yet.")
 
-    train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True, 
+    train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True,
         persistent_workers=True, pin_memory=True, num_workers=config.data.num_workers, drop_last=True)
 
     return train_loader

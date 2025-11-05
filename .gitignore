@@ -41,8 +41,7 @@ runs/
 wandb/
 tensorboard/
 MNIST/
-capella/
-data/sentinel12-image-pairs-segregated-by-terrain/
+dataset/
 
 # -----------------------------
 # OS / Editor files

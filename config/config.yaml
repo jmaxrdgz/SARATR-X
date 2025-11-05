@@ -12,7 +12,7 @@ model:
 
 data:
   dataset_name: "sentinel"
-  train_data: "capella/chips_512"
+  train_data: "dataset/sentinel12/v_2"
   img_size: 256                     # 256 for sentinel-1&2
   dataset_std_dev: 1.57
   num_workers: 2
