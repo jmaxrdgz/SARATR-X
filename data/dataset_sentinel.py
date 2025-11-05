@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 import torch
 from torch.utils.data import Dataset
@@ -38,9 +39,31 @@ class SentinelDataset(Dataset):
     def __getitem__(self, idx):
         sar_path = self.pairs[0][idx]
         opt_path = self.pairs[1][idx]
+        
+        # Load .jpg images using PIL and convert to tensors
+        sar_img = Image.open(sar_path)
+        opt_img = Image.open(opt_path)
 
-        sar_img = torch.from_numpy(np.load(sar_path)).float()
-        opt_img = torch.from_numpy(np.load(opt_path)).float()
+        # Convert to numpy arrays (no normalization)
+        sar_img = np.array(sar_img).astype(np.float32)
+        opt_img = np.array(opt_img).astype(np.float32)
+
+        # Handle channel dimensions
+        # If grayscale (H, W), add channel dimension -> (1, H, W)
+        if sar_img.ndim == 2:
+            sar_img = sar_img[np.newaxis, :, :]
+        else:
+            # If RGB (H, W, C), transpose to (C, H, W)
+            sar_img = np.transpose(sar_img, (2, 0, 1))
+
+        if opt_img.ndim == 2:
+            opt_img = opt_img[np.newaxis, :, :]
+        else:
+            opt_img = np.transpose(opt_img, (2, 0, 1))
+            
+        # Convert to torch tensors
+        sar_img = torch.from_numpy(sar_img).float()
+        opt_img = torch.from_numpy(opt_img).float()
 
         if self.transform:
             sar_img, opt_img = self.transform(sar_img, opt_img)
