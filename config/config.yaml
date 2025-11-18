@@ -1,7 +1,6 @@
 # config.yaml
 
-# TODO: Make config loggable with lightning
-# TODO: make training work for every input size
+# TODO: make training work for 512 input size
 
 model:
   name: SARATRX                     # SARATR-X Training hyperparameters
@@ -12,9 +11,9 @@ model:
   norm_pix_loss: false              # false in SARATRX paper
 
 data:
-  dataset_name: "sentinel"          # "capella" or "sentinel"
-  train_data: "dataset/sentinel12/v_2"
-  img_size: 224                     # 256 for sentinel-1&2
+  dataset_name: "capella"          # "capella" or "sentinel"
+  train_data: "dataset/capella/chips_512"
+  img_size: 512                     # 256 for sentinel-1&2
   num_workers: 2
 
 train:

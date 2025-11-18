@@ -35,6 +35,15 @@ class SARATRX(L.LightningModule):
                 state_dict['patch_embed.proj.weight'] = avg_weight.repeat(1, kwargs.get('in_chans', 3), 1, 1)
                 print(f">>> Adapted first conv layer from 3 to {kwargs.get('in_chans', 3)} channels")
 
+            # Exclude position embeddings if image size changed (they'll be regenerated with sin-cos)
+            if img_size != 224:
+                excluded_keys = ['absolute_pos_embed', 'decoder_pos_embed']
+                for key in excluded_keys:
+                    if key in state_dict:
+                        del state_dict[key]
+                grid_size = img_size // 16  # patch_size = 16
+                print(f">>> Excluded pos_embed from checkpoint (using sin-cos for {grid_size}x{grid_size} grid)")
+
             self.model.load_state_dict(state_dict, strict=False)
             print(">>> Load pretrained ImageNet weights")
 
@@ -55,7 +64,9 @@ class SARATRX(L.LightningModule):
 
         loss = self._forward_loss(imgs, target_imgs, cls_pred, pred, mask)
 
+        # Log loss and learning rate
         self.log("train_loss", loss, prog_bar=True)
+        self.log("lr", self.optimizers().param_groups[0]["lr"], prog_bar=True)
         return loss
 
 
