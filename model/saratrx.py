@@ -1,6 +1,7 @@
 import math
 import torch
 from torch import nn
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 import lightning as L
 from functools import partial
@@ -14,7 +15,7 @@ class SARATRX(L.LightningModule):
     def __init__(self, img_size=512, mask_ratio=0.75, mgf_kens = [9, 13, 17], target_mode="mgf", **kwargs):
         super().__init__()
         self.example_input_array = torch.Tensor(
-            config.train.batch_size, config.model.in_chans, config.data.img_size, config.data.img_size)
+            config.TRAIN.BATCH_SIZE, config.MODEL.IN_CHANS, config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)
         self.save_hyperparameters()
 
         self.model = HiViTMaskedAutoencoder(
@@ -23,9 +24,9 @@ class SARATRX(L.LightningModule):
             hifeat=True, rpe=False, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
         # Load pretrained weights
-        if config.model.resume is None:
+        if config.MODEL.RESUME is None:
             state_dict = torch.load(
-                config.train.init_weights, map_location="cpu", weights_only=True)
+                config.TRAIN.INIT_WEIGHTS, map_location="cpu", weights_only=True)
 
             # Adapt first conv layer from 3 channels to in_chans by averaging
             if kwargs.get('in_chans', 3) != 3 and 'patch_embed.proj.weight' in state_dict:
@@ -116,26 +117,35 @@ class SARATRX(L.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(
-            self.parameters(), 
-            lr=float(config.train.lr),
-            weight_decay=config.train.weight_decay,
-            betas=(config.train.optimizer_momentum.beta1, config.train.optimizer_momentum.beta2),
+        """Configure optimizer with cosine annealing and warmup."""
+        # AdamW optimizer
+        optimizer = AdamW(
+            self.parameters(),
+            lr=config.TRAIN.LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
+            betas=(config.TRAIN.OPTIMIZER_MOMENTUM.BETA1, config.TRAIN.OPTIMIZER_MOMENTUM.BETA2)
         )
 
-        # Cosine LR wcheduler with warmup
-        def lr_lambda(current_epoch):
-            if current_epoch < config.train.warmup_epochs:
-                return float(current_epoch) / float(max(1, config.train.warmup_epochs))
-            progress = (current_epoch - config.train.warmup_epochs) / float(
-                max(1, config.train.epochs - config.train.warmup_epochs)
-            )
-            return 0.5 * (1.0 + math.cos(math.pi * progress))
+        # Cosine annealing with warmup
+        def lr_lambda(current_step):
+            warmup = config.TRAIN.WARMUP_EPOCHS * self.trainer.num_training_batches
+            total = config.TRAIN.EPOCHS * self.trainer.num_training_batches
 
-        scheduler = {
-            "scheduler": LambdaLR(optimizer, lr_lambda=lr_lambda),
-            "interval": "epoch",   # or "step"
-            "frequency": 1,
+            if current_step < warmup:
+                # Linear warmup
+                return float(current_step) / float(max(1, warmup))
+            else:
+                # Cosine annealing
+                progress = float(current_step - warmup) / float(max(1, total - warmup))
+                return 0.5 * (1.0 + math.cos(progress * math.pi))
+
+        scheduler = LambdaLR(optimizer, lr_lambda)
+
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'interval': 'step',  # Update every step, not epoch
+                'frequency': 1
+            }
         }
-
-        return [optimizer], [scheduler]
