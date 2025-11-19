@@ -34,8 +34,8 @@ class PairedTransform:
 def build_loader(dataset_name=None, **kwargs):
     """Builds and returns the training data loader."""
     base_transform = transforms.Compose([
-        transforms.RandomResizedCrop(config.data.img_size, scale=(0.2, 1.0), interpolation=3),
-        transforms.Resize((config.data.img_size, config.data.img_size)), # Ensure input size
+        transforms.RandomResizedCrop(config.DATA.IMG_SIZE, scale=(0.2, 1.0), interpolation=3),
+        transforms.Resize((config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)), # Ensure input size
 
         # transforms.RandomAffine(degrees=(-10,10), shear=(0, 0, -10, 10)),
         transforms.RandomHorizontalFlip(),
@@ -47,15 +47,15 @@ def build_loader(dataset_name=None, **kwargs):
     if dataset_name is None:
         raise ValueError("Dataset name must be provided")
     elif dataset_name == "capella":
-        train_dataset = CapellaDataset(folder=config.data.train_data, transform=base_transform)
+        train_dataset = CapellaDataset(folder=config.DATA.TRAIN_DATA, transform=base_transform)
     elif dataset_name == "sentinel":
         # Sentinel: paired SAR-optical images, use paired transform
         paired_transform = PairedTransform(base_transform)
-        train_dataset = SentinelDataset(data_path=config.data.train_data, transform=paired_transform, **kwargs)
+        train_dataset = SentinelDataset(data_path=config.DATA.TRAIN_DATA, transform=paired_transform, **kwargs)
     else:
         raise ValueError(f"Dataset: {dataset_name} not implemented yet.")
 
-    train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True,
-        persistent_workers=True, pin_memory=True, num_workers=config.data.num_workers, drop_last=True)
+    train_loader = DataLoader(train_dataset, batch_size=config.TRAIN.BATCH_SIZE, shuffle=True,
+        persistent_workers=True, pin_memory=True, num_workers=config.DATA.NUM_WORKERS, drop_last=True)
 
     return train_loader

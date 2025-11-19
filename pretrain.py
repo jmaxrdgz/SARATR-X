@@ -13,37 +13,37 @@ if __name__ == "__main__":
     if platform.system() == "Darwin":
         mp.set_start_method("spawn", force=True) # Avoid errors on MacOS
 
-    L.seed_everything(config.train.seed, workers=True)
+    L.seed_everything(config.TRAIN.SEED, workers=True)
 
     # Validate config consistency
-    if config.model.target_mode == "optical" and config.data.dataset_name != "sentinel":
+    if config.MODEL.TARGET_MODE == "optical" and config.DATA.DATASET_NAME != "sentinel":
         raise ValueError(
             f"target_mode='optical' requires dataset_name='sentinel', "
-            f"got dataset_name='{config.data.dataset_name}'"
+            f"got dataset_name='{config.DATA.DATASET_NAME}'"
         )
 
-    train_loader = build_loader(dataset_name=config.data.dataset_name) # NOTE: when using sentinel, can pass terrains argument here
+    train_loader = build_loader(dataset_name=config.DATA.DATASET_NAME) # NOTE: when using sentinel, can pass terrains argument here
 
     # --- Training Run ---
-    if config.model.resume is not None: # Load from a lightning checkpoint
-        print(">>> Load SARATR-X model from checkpoint:", config.model.resume)
-        autoencoder = SARATRX.load_from_checkpoint(config.model.resume, map_location="cpu")
+    if config.MODEL.RESUME is not None: # Load from a lightning checkpoint
+        print(">>> Load SARATR-X model from checkpoint:", config.MODEL.RESUME)
+        autoencoder = SARATRX.load_from_checkpoint(config.MODEL.RESUME, map_location="cpu")
     else:
         autoencoder = SARATRX(
-            img_size=config.data.img_size,
-            in_chans=config.model.in_chans,
-            mgf_kens=config.model.mgf_kens,
-            target_mode=config.model.target_mode,
-            norm_pix_loss=config.model.norm_pix_loss,
+            img_size=config.DATA.IMG_SIZE,
+            in_chans=config.MODEL.IN_CHANS,
+            mgf_kens=config.MODEL.MGF_KENS,
+            target_mode=config.MODEL.TARGET_MODE,
+            norm_pix_loss=config.MODEL.NORM_PIX_LOSS,
         )
 
     trainer = L.Trainer(
         callbacks=ModelSummary(max_depth=0),
-        gradient_clip_val=config.train.clip_grad,
+        gradient_clip_val=config.TRAIN.CLIP_GRAD,
         precision="16-mixed",
-        devices=config.train.n_gpu,
+        devices=config.TRAIN.N_GPU,
         accelerator="auto",
-        max_epochs=config.train.epochs,
+        max_epochs=config.TRAIN.EPOCHS,
         log_every_n_steps=50,
         deterministic=True,
         enable_progress_bar=True,
